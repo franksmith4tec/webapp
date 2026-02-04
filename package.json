@@ -1,5 +1,5 @@
 {
-  "name": "mobile-app",
+  "name": "vue-project",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -9,13 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@capacitor/android": "^8.0.2",
-    "@capacitor/cli": "^8.0.2",
-    "@capacitor/core": "^8.0.2",
-    "@ionic/core": "^8.7.17",
-    "@ionic/vue": "^8.7.17",
     "axios": "^1.13.4",
-    "ionicons": "^8.0.13",
     "pinia": "^3.0.4",
     "vue": "^3.5.27",
     "vue-router": "^5.0.1"
