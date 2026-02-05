@@ -1,5 +1,5 @@
 {
-  "appId": "vue.project",
-  "appName": "vue-project",
+  "appId": "com.webapp",
+  "appName": "webapp",
   "webDir": "dist"
 }

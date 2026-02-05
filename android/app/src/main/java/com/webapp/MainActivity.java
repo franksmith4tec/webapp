@@ -1,4 +1,4 @@
-package vue.project;
+package com.webapp;
 
 import com.getcapacitor.BridgeActivity;
 
