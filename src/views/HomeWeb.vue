@@ -1,20 +1,17 @@
 <template>
   <div class="contact-app">
-    <!-- Header -->
+    <!-- Your existing web view code here -->
     <div class="app-header">
-      <h1>Contact Form</h1>
+      <h1>Contact Form (Web)</h1>
       <p>Submit your contact information</p>
     </div>
 
-    <!-- Main Content -->
     <div class="app-content">
-      <!-- Left Side - Form -->
       <div class="form-section">
         <div class="form-card">
           <h2>Add New Contact</h2>
           
           <form @submit.prevent="submitForm">
-            <!-- Name Field -->
             <div class="input-group">
               <label>Full Name *</label>
               <input
@@ -29,7 +26,6 @@
               </div>
             </div>
 
-            <!-- Email Field -->
             <div class="input-group">
               <label>Email Address *</label>
               <input
@@ -44,7 +40,6 @@
               </div>
             </div>
 
-            <!-- Phone Field (optional) -->
             <div class="input-group">
               <label>Phone Number (optional)</label>
               <input
@@ -55,7 +50,6 @@
               >
             </div>
 
-            <!-- Submit Button -->
             <button 
               type="submit" 
               class="submit-btn"
@@ -66,7 +60,6 @@
             </button>
           </form>
 
-          <!-- Success Message -->
           <div v-if="success" class="success-message">
             <div class="success-icon">✓</div>
             <div class="success-text">
@@ -79,7 +72,6 @@
       </div>
     </div>
 
-    <!-- Error Message -->
     <div v-if="error" class="error-toast">
       <div class="error-icon">!</div>
       <div class="error-text">{{ error }}</div>
@@ -91,45 +83,37 @@
 <script setup>
 import { ref, reactive } from 'vue'
 
-// API URL - CHANGE THIS TO YOUR SERVER
+// Reuse the same logic as before
 const API_URL = 'http://localhost/api/api.php'
 
-// Form data
 const form = reactive({
   name: '',
   email: '',
   phone: ''
 })
 
-// State
 const errors = reactive({})
 const submitting = ref(false)
 const success = ref(false)
 const submittedName = ref('')
 const error = ref('')
 
-// Clear error for field
 const clearError = (field) => {
   if (errors[field]) {
     errors[field] = ''
   }
 }
 
-// Validate form
 const validateForm = () => {
   let isValid = true
-  
-  // Clear previous errors
   errors.name = ''
   errors.email = ''
   
-  // Name validation
   if (!form.name.trim()) {
     errors.name = 'Name is required'
     isValid = false
   }
   
-  // Email validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!form.email.trim()) {
     errors.email = 'Email is required'
@@ -142,7 +126,6 @@ const validateForm = () => {
   return isValid
 }
 
-// Show error
 const showError = (message) => {
   error.value = message
   setTimeout(() => {
@@ -150,7 +133,6 @@ const showError = (message) => {
   }, 5000)
 }
 
-// Submit form - POST only
 const submitForm = async () => {
   if (!validateForm()) {
     return
@@ -168,32 +150,27 @@ const submitForm = async () => {
       body: JSON.stringify({
         name: form.name.trim(),
         email: form.email.trim(),
-        phone: form.phone.trim() || '' // Send empty string if no phone
+        phone: form.phone.trim() || ''
       })
     })
     
     const data = await response.json()
     
     if (response.ok && data.success) {
-      // Success
       success.value = true
       submittedName.value = form.name
       
-      // Reset form
       form.name = ''
       form.email = ''
       form.phone = ''
       
-      // Auto-hide success after 5 seconds
       setTimeout(() => {
         success.value = false
       }, 5000)
     } else {
-      // Server error
       showError(data.error || 'Failed to submit contact')
     }
   } catch (err) {
-    // Network error
     showError('Network error. Please check your connection.')
     console.error('Submit error:', err)
   } finally {
@@ -201,6 +178,7 @@ const submitForm = async () => {
   }
 }
 </script>
+
 
 <style scoped>
 .contact-app {
