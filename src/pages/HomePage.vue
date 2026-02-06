@@ -9,7 +9,16 @@
             <ion-icon slot="end" :icon="arrowForward"></ion-icon>
           </ion-button>
         </ion-buttons>
+
+        <ion-buttons slot="end">
+          <ion-button @click="goToInformation">
+            Information
+            <ion-icon slot="end" :icon="arrowForward"></ion-icon>
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
+
+  
     </ion-header>
     
     <ion-content class="ion-padding">
@@ -39,6 +48,10 @@
       
       <ion-button expand="block" color="secondary" @click="goToAbout">
         Go to About Page
+      </ion-button>
+
+        <ion-button expand="block" color="secondary" @click="goToInformation">
+        Go to Information Page
       </ion-button>
       
       <ion-card>
@@ -90,6 +103,9 @@ export default {
     
     goToAbout() {
       this.$router.push('/about')
+    },
+     goToInformation() {
+      this.$router.push('/information')
     }
   }
 }

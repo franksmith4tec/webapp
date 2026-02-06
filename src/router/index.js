@@ -2,13 +2,19 @@ import { createRouter as createIonicRouter, createWebHistory } from '@ionic/vue-
 
 const routes = [
   {
-    path: '/',
+    path: '/home',
     redirect: '/home'
   },
   {
     path: '/home',
     name: 'Home',
     component: () => import('@/pages/HomePage.vue')
+  },
+
+  {
+    path: '/',
+    name: 'Information',
+    component: () => import('@/pages/InformationPage.vue')
   },
   {
     path: '/about',
