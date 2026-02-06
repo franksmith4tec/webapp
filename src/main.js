@@ -1,14 +1,20 @@
-import './assets/main.css'
-
 import { createApp } from 'vue'
-import { createPinia } from 'pinia'
-
 import App from './App.vue'
 import router from './router'
 
+// Import Ionic Vue and router
+import { IonicVue } from '@ionic/vue'
+import '@ionic/vue-router' // This is important!
+
+// Import Ionic CSS
+import '@ionic/core/css/ionic.bundle.css'
+
 const app = createApp(App)
 
-app.use(createPinia())
+// Use Ionic Vue
+app.use(IonicVue)
 app.use(router)
 
-app.mount('#app')
+router.isReady().then(() => {
+    app.mount('#app')
+})

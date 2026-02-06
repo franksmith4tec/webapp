@@ -16,9 +16,13 @@
     "@capacitor/haptics": "8.0.0",
     "@capacitor/keyboard": "8.0.0",
     "@capacitor/status-bar": "8.0.0",
+    "@ionic/core": "^8.7.17",
+    "@ionic/vue": "^8.7.17",
+    "@ionic/vue-router": "^8.7.17",
+    "ionicons": "^8.0.13",
     "pinia": "^3.0.4",
     "vue": "^3.5.27",
-    "vue-router": "^5.0.1"
+    "vue-router": "^4.3.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.3",
