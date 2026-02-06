@@ -11,6 +11,7 @@ const routes = [
     component: () => import('@/pages/HomePage.vue')
   },
 
+
   {
     path: '/',
     name: 'Information',
