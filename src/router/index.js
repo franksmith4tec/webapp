@@ -5,6 +5,8 @@ const routes = [
     path: '/home',
     redirect: '/home'
   },
+
+
   {
     path: '/home',
     name: 'Home',
