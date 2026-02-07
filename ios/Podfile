@@ -1,0 +1,11 @@
+platform :ios, '13.0'
+use_frameworks!
+
+target 'App' do
+  # Capacitor Pods
+  pod 'Capacitor', :path => '../../node_modules/@capacitor/ios'
+  pod 'CapacitorCordova', :path => '../../node_modules/@capacitor/ios'
+
+  # Add any other Capacitor plugins you have installed
+  # pod 'CapacitorCamera', :path => '../../node_modules/@capacitor/camera'
+end
