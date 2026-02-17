@@ -2,7 +2,7 @@ import { createRouter as createIonicRouter, createWebHistory } from '@ionic/vue-
 
 const routes = [
   {
-    path: '/home',
+    path: '/',
     redirect: '/home'
   },
 
@@ -14,7 +14,7 @@ const routes = [
 
 
   {
-    path: '/',
+    path: '/information',
     name: 'Information',
     component: () => import('@/pages/InformationPage.vue')
   },
