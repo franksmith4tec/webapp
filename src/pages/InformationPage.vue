@@ -19,7 +19,9 @@
             </div>
             <div class="title-text-container">
               <h1 class="title-main">Billing</h1>
-              <p class="title-sub">{{ data.length }} of {{ pagination.total }} records</p>
+              <p class="title-sub">
+                {{ searchMode ? `${searchResults.length} results` : `${data.length} of ${pagination.total} records` }}
+              </p>
             </div>
           </div>
         </ion-title>
@@ -46,6 +48,29 @@
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
+      
+      <!-- Compact Search Bar -->
+      <div class="search-container" :class="{ 'search-elevated': isScrolled }">
+        <div class="search-wrapper">
+          <ion-icon :icon="search" class="search-icon"></ion-icon>
+          <input 
+            ref="searchInputRef"
+            type="text" 
+            v-model="searchQuery" 
+            placeholder="Search by name..." 
+            class="search-input"
+            @input="handleSearch"
+          />
+          <ion-button 
+            v-if="searchQuery"
+            fill="clear" 
+            @click="clearSearch" 
+            class="clear-search-button"
+          >
+            <ion-icon :icon="close"></ion-icon>
+          </ion-button>
+        </div>
+      </div>
     </ion-header>
 
     <ion-content 
@@ -53,9 +78,10 @@
       :class="{ 'content-padded': !isScrolled }"
       @ionScroll="onScroll"
       :scroll-events="true"
+      ref="contentRef"
     >
-      <!-- Quick Stats Cards -->
-      <div v-if="!loading && !error && data.length > 0" class="stats-grid">
+      <!-- Quick Stats Cards (hide during search) -->
+      <div v-if="!loading && !error && data.length > 0 && !searchMode" class="stats-grid">
         <div class="stat-card" v-for="stat in stats" :key="stat.label">
           <div class="stat-icon-wrapper" :style="{ background: stat.gradient }">
             <ion-icon :icon="stat.icon" class="stat-icon"></ion-icon>
@@ -100,29 +126,35 @@
         <ion-button @click="fetchData" class="retry-button">
           <ion-icon :icon="refresh" slot="start"></ion-icon>
           Try Again
-       </ion-button>
+        </ion-button>
       </div>
 
       <!-- Empty State with Illustration -->
-      <div v-if="!loading && !error && data.length === 0" class="empty-container">
+      <div v-if="!loading && !error && displayData.length === 0" class="empty-container">
         <div class="empty-illustration">
           <svg width="120" height="120" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/>
             <path d="M8 10h8M8 14h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
           </svg>
         </div>
-        <h3 class="empty-title">No billing records</h3>
-        <p class="empty-message">Your billing history will appear here</p>
-        <ion-button @click="fetchData" fill="outline" class="refresh-button">
+        <h3 class="empty-title">No matching records</h3>
+        <p class="empty-message">{{ searchQuery ? `No results found for "${searchQuery}"` : 'No billing records available' }}</p>
+        <ion-button v-if="searchQuery" @click="clearSearch" fill="outline" class="refresh-button">
+          <ion-icon :icon="close" slot="start"></ion-icon>
+          Clear Search
+        </ion-button>
+        <ion-button v-else @click="fetchData" fill="outline" class="refresh-button">
           <ion-icon :icon="refresh" slot="start"></ion-icon>
           Refresh
         </ion-button>
       </div>
 
       <!-- Data List with Modern Cards -->
-      <div v-if="!loading && !error && data.length > 0" class="list-container">
+      <div v-if="!loading && !error && displayData.length > 0" class="list-container">
         <div class="list-header">
-          <span class="list-header-title">Recent Transactions</span>
+          <span class="list-header-title">
+            {{ searchMode ? 'Search Results' : 'Recent Transactions' }}
+          </span>
           <ion-button fill="clear" size="small" @click="sortData">
             <ion-icon :icon="funnel" slot="start"></ion-icon>
             Filter
@@ -131,10 +163,10 @@
         
         <div class="card-list">
           <div 
-            v-for="(item, index) in data" 
+            v-for="(item, index) in displayData" 
             :key="item.id" 
             class="record-card"
-            :class="{ 'card-expanded': expandedCard === item.id }"
+            :class="{ 'card-expanded': expandedCard === item.id, 'search-result': searchMode }"
             @click="toggleCardExpansion(item.id)"
           >
             <!-- Card Header -->
@@ -144,7 +176,7 @@
                   <span class="card-type-icon">{{ getCardTypeEmoji(item.card_type) }}</span>
                 </div>
                 <div class="card-info">
-                  <h4 class="card-title">{{ item.card_holder_name || 'Unknown' }}</h4>
+                  <h4 class="card-title" v-html="highlightText(item.card_holder_name || 'Unknown')"></h4>
                   <p class="card-subtitle">
                     <span class="card-number">{{ formatCardNumberShort(item.card_number) }}</span>
                     <span class="card-badge" :class="getCardTypeClass(item.card_type)">
@@ -216,8 +248,8 @@
         </div>
       </div>
 
-      <!-- Modern Pagination -->
-      <div v-if="!loading && !error && data.length > 0" class="pagination-container">
+      <!-- Modern Pagination (hide during search) -->
+      <div v-if="!loading && !error && data.length > 0 && !searchMode" class="pagination-container">
         <div class="pagination-info">
           Showing {{ (pagination.page - 1) * pagination.limit + 1 }} - 
           {{ Math.min(pagination.page * pagination.limit, pagination.total) }} 
@@ -258,17 +290,24 @@
         </div>
       </div>
 
-      <!-- Bottom Sheet Modal -->
+      <!-- Load More for Search Results -->
+      <div v-if="searchMode && hasMoreResults && !loading" class="load-more-container">
+        <ion-button expand="block" fill="outline" @click="loadMoreResults">
+          Load More Results ({{ searchResults.length - displayedResults }} remaining)
+        </ion-button>
+      </div>
+
+      <!-- Bottom Sheet Modal with Scroll -->
       <ion-modal 
         :is-open="quickViewVisible" 
         @didDismiss="closeQuickView"
         class="bottom-sheet-modal"
         :breakpoints="[0, 0.5, 0.9]"
-        :initial-breakpoint="0.5"
+        :initial-breakpoint="0.9"
         handle-behavior="cycle"
       >
         <div class="bottom-sheet-content" v-if="selectedItem">
-          <!-- Modal Header -->
+          <!-- Modal Header (fixed) -->
           <div class="sheet-header">
             <div class="sheet-handle"></div>
             <div class="sheet-title-container">
@@ -285,8 +324,8 @@
             </div>
           </div>
 
-          <!-- Modal Body -->
-          <div class="sheet-body">
+          <!-- Modal Body (scrollable) -->
+          <div class="sheet-body" ref="modalBodyRef">
             <!-- Card Preview -->
             <div class="card-preview" :style="{ background: getCardGradient(selectedItem.card_type) }">
               <div class="card-chip"></div>
@@ -378,7 +417,7 @@
             </div>
           </div>
 
-          <!-- Modal Footer -->
+          <!-- Modal Footer (fixed) -->
           <div class="sheet-footer">
             <ion-button expand="block" @click="copyRecord(selectedItem)" class="footer-button">
               <ion-icon :icon="copy" slot="start"></ion-icon>
@@ -412,16 +451,17 @@ import {
   refresh, chevronBack, chevronForward, chevronDown, chevronUp, close, card, 
   personCircle, location, eye, copy, copyOutline, warning, documentText,
   home, business, informationCircle, refreshCircle, moon, sunny,
-  calendar, key, funnel, cash
+  calendar, key, funnel, cash, search
 } from 'ionicons/icons'
 
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue'
 
 // API Configuration
 const API_URL = 'https://trademarkatlas.com/fetch.php'
 
 // State
 const data = ref([])
+const allData = ref([]) // Store all fetched data for searching
 const loading = ref(false)
 const error = ref('')
 const selectedItem = ref(null)
@@ -432,12 +472,38 @@ const expandedCard = ref(null)
 const isScrolled = ref(false)
 const isPullToRefresh = ref(false)
 
+// Search State
+const searchQuery = ref('')
+const searchResults = ref([])
+const searchMode = computed(() => searchQuery.value.length > 0)
+const searchInputRef = ref(null)
+const searchPage = ref(1)
+const resultsPerPage = 20
+const displayedResults = computed(() => {
+  if (!searchMode.value) return 0
+  return Math.min(searchPage.value * resultsPerPage, searchResults.value.length)
+})
+const hasMoreResults = computed(() => {
+  return searchMode.value && displayedResults.value < searchResults.value.length
+})
+
+// Display data based on mode
+const displayData = computed(() => {
+  if (searchMode.value) {
+    return searchResults.value.slice(0, displayedResults.value)
+  }
+  return data.value
+})
+
 const pagination = reactive({
   page: 1,
   limit: 20,
   total: 0,
   pages: 1
 })
+
+// Computed
+const themeIcon = computed(() => darkMode.value ? sunny : moon)
 
 // Stats computed
 const stats = computed(() => [
@@ -467,8 +533,133 @@ const stats = computed(() => [
   }
 ])
 
-// Computed
-const themeIcon = computed(() => darkMode.value ? sunny : moon)
+// Watch for search query changes
+watch(searchQuery, (newQuery) => {
+  if (newQuery.length > 0) {
+    performSearch()
+  } else {
+    searchResults.value = []
+    searchPage.value = 1
+  }
+})
+
+// Search functions
+const performSearch = () => {
+  // If we have all data loaded, search locally
+  if (allData.value.length > 0) {
+    const query = searchQuery.value.toLowerCase().trim()
+    
+    // Filter by name only
+    let results = allData.value.filter(item => {
+      const name = (item.card_holder_name || '').toLowerCase()
+      return name.includes(query)
+    })
+    
+    // Sort results: exact matches first, then by relevance
+    results = results.sort((a, b) => {
+      const nameA = (a.card_holder_name || '').toLowerCase()
+      const nameB = (b.card_holder_name || '').toLowerCase()
+      
+      // Exact match gets highest priority
+      if (nameA === query && nameB !== query) return -1
+      if (nameB === query && nameA !== query) return 1
+      
+      // Starts with query gets next priority
+      if (nameA.startsWith(query) && !nameB.startsWith(query)) return -1
+      if (nameB.startsWith(query) && !nameA.startsWith(query)) return 1
+      
+      // Then by length (shorter names first as they're often more relevant)
+      return nameA.length - nameB.length
+    })
+    
+    searchResults.value = results
+  } else {
+    // If not, fetch all data first
+    fetchAllData()
+  }
+  
+  searchPage.value = 1
+  expandedCard.value = null
+}
+
+const fetchAllData = async () => {
+  loading.value = true
+  
+  try {
+    // Fetch first page to get total count
+    const firstResponse = await fetch(`${API_URL}?page=1&limit=100`)
+    const firstResult = await firstResponse.json()
+    
+    if (firstResult.success) {
+      const totalPages = firstResult.pagination?.pages || 1
+      const allRecords = [...(firstResult.data || [])]
+      
+      // Fetch remaining pages
+      const fetchPromises = []
+      for (let page = 2; page <= totalPages; page++) {
+        fetchPromises.push(fetch(`${API_URL}?page=${page}&limit=100`).then(res => res.json()))
+      }
+      
+      const remainingResults = await Promise.all(fetchPromises)
+      remainingResults.forEach(result => {
+        if (result.success && result.data) {
+          allRecords.push(...result.data)
+        }
+      })
+      
+      allData.value = allRecords
+      
+      // After fetching all data, perform the search if there's a query
+      if (searchQuery.value) {
+        performSearch()
+      }
+    }
+  } catch (err) {
+    console.error('Error fetching all data:', err)
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleSearch = () => {
+  // Debounced search
+  clearTimeout(searchTimeout.value)
+  searchTimeout.value = setTimeout(() => {
+    performSearch()
+  }, 300)
+}
+
+const clearSearch = () => {
+  searchQuery.value = ''
+  searchResults.value = []
+  searchPage.value = 1
+  expandedCard.value = null
+  
+  // Refocus on content
+  if (contentRef.value) {
+    contentRef.value.$el.scrollToTop()
+  }
+}
+
+const loadMoreResults = () => {
+  searchPage.value++
+}
+
+const highlightText = (text) => {
+  if (!searchQuery.value || !text) return text
+  
+  const query = searchQuery.value.toLowerCase().trim()
+  const textLower = text.toLowerCase()
+  
+  if (!textLower.includes(query)) return text
+  
+  const index = textLower.indexOf(query)
+  const before = text.substring(0, index)
+  const match = text.substring(index, index + query.length)
+  const after = text.substring(index + query.length)
+  
+  return `${before}<span class="highlight">${match}</span>${after}`
+}
 
 // Formatting functions
 const formatCardNumberShort = (cardNumber) => {
@@ -578,7 +769,7 @@ const sortData = () => {
   console.log('Sort data')
 }
 
-// Fetch data
+// Fetch data (pagination)
 const fetchData = async () => {
   loading.value = true
   error.value = ''
@@ -605,6 +796,11 @@ const fetchData = async () => {
         total: result.pagination?.total || 0,
         pages: result.pagination?.pages || 1
       })
+      
+      // Also fetch all data in background for search
+      if (allData.value.length === 0) {
+        fetchAllData()
+      }
     } else {
       throw new Error(result.error || 'Failed to fetch data')
     }
@@ -715,6 +911,13 @@ const showQuickView = (item) => {
   selectedItem.value = item
   quickViewVisible.value = true
   expandedCard.value = null
+  
+  // Reset scroll position when modal opens
+  nextTick(() => {
+    if (modalBodyRef.value) {
+      modalBodyRef.value.scrollTop = 0
+    }
+  })
 }
 
 const closeQuickView = () => {
@@ -746,7 +949,6 @@ onMounted(() => {
    ============================================ */
 
 .card-amount {display: none;}
-
 
 /* Variables */
 :root {
@@ -879,6 +1081,105 @@ onMounted(() => {
 }
 
 /* ============================================
+   COMPACT SEARCH
+   ============================================ */
+.search-container {
+  padding: 4px 16px 12px;
+  transition: var(--transition);
+}
+
+.search-elevated {
+  padding-top: 0;
+}
+
+.search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--gray-100);
+  border-radius: 10px;
+  height: 40px;
+  transition: var(--transition);
+  border: 1px solid transparent;
+}
+
+.dark-theme .search-wrapper {
+  background: var(--gray-800);
+}
+
+.search-wrapper:focus-within {
+  background: white;
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
+}
+
+.dark-theme .search-wrapper:focus-within {
+  background: var(--gray-900);
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--gray-400);
+  font-size: 18px;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  height: 100%;
+  padding: 0 40px;
+  background: transparent;
+  border: none;
+  font-size: 15px;
+  color: var(--gray-900);
+  outline: none;
+}
+
+.dark-theme .search-input {
+  color: white;
+}
+
+.search-input::placeholder {
+  color: var(--gray-400);
+  font-size: 14px;
+}
+
+.clear-search-button {
+  position: absolute;
+  right: 6px;
+  --padding-start: 6px;
+  --padding-end: 6px;
+  --border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  --background: var(--gray-200);
+  color: var(--gray-600);
+  margin: 0;
+}
+
+.dark-theme .clear-search-button {
+  --background: var(--gray-700);
+  color: var(--gray-300);
+}
+
+/* ============================================
+   HIGHLIGHT STYLES
+   ============================================ */
+:deep(.highlight) {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--primary);
+  font-weight: 600;
+  padding: 2px 0;
+  border-radius: 4px;
+}
+
+.dark-theme :deep(.highlight) {
+  background: rgba(99, 102, 241, 0.25);
+  color: var(--primary-light);
+}
+
+/* ============================================
    CONTENT STYLES
    ============================================ */
 .modern-content {
@@ -905,15 +1206,16 @@ onMounted(() => {
 }
 
 .stat-card {
-  background: white;
-  border-radius: var(--radius-lg);
-  padding: 16px 12px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-shadow: var(--shadow-sm);
-  transition: var(--transition);
-  border: 1px solid var(--gray-100);
+
+    background: white;
+    border-radius: 20px;
+    padding: 16px 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .dark-theme .stat-card {
@@ -927,12 +1229,15 @@ onMounted(() => {
 }
 
 .stat-icon-wrapper {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+
+      width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 20px;
 }
 
 .stat-icon {
@@ -1123,6 +1428,16 @@ onMounted(() => {
   transition: var(--transition);
   border: 1px solid var(--gray-100);
   box-shadow: var(--shadow-sm);
+
+
+      display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 15px;
+
 }
 
 .dark-theme .record-card {
@@ -1137,6 +1452,10 @@ onMounted(() => {
 
 .card-expanded {
   box-shadow: var(--shadow-lg);
+}
+
+.search-result {
+  border-left: 3px solid var(--primary);
 }
 
 .card-header {
@@ -1250,9 +1569,14 @@ onMounted(() => {
 }
 
 /* Expanded Content */
-.card-expanded-content {
-  padding: 0 16px 16px 76px;
-  animation: slideDown 0.2s ease-out;
+.card-expanded-content{
+    padding: 10px 0px;
+    animation: slideDown-57100499 0.2s ease-out;
+    display: flex;
+    grid-template-columns: 1fr 1fr;
+    width: 65%;
+    align-items: center;
+    justify-content: space-around;
 }
 
 @keyframes slideDown {
@@ -1266,9 +1590,11 @@ onMounted(() => {
   }
 }
 
-.expanded-section {
-  margin-bottom: 16px;
-}
+
+
+
+.expanded-section .info-row:nth-child(2) {display: none;}
+.expanded-section .info-row:nth-child(3) {display: none;}
 
 .info-row {
   display: flex;
@@ -1326,10 +1652,11 @@ onMounted(() => {
   color: var(--gray-400);
 }
 
-.card-actions {
-  display: flex;
-  gap: 12px;
-  padding-top: 12px;
+.card-actions{
+    display: flex;
+    gap: 0px;
+    /* padding-top: 10px; */
+    width: 200px;
 }
 
 .card-action-button {
@@ -1430,6 +1757,20 @@ onMounted(() => {
 }
 
 /* ============================================
+   LOAD MORE
+   ============================================ */
+.load-more-container {
+  padding: 16px;
+  text-align: center;
+}
+
+.load-more-container ion-button {
+  --border-color: var(--gray-300);
+  --color: var(--gray-600);
+  font-weight: 500;
+}
+
+/* ============================================
    BOTTOM SHEET MODAL
    ============================================ */
 .bottom-sheet-modal {
@@ -1437,12 +1778,18 @@ onMounted(() => {
   --border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
+.bottom-sheet-modal::part(content) {
+  max-height: 90vh;
+  overflow: hidden;
+}
+
 .bottom-sheet-content {
   background: white;
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-  min-height: 50vh;
-  max-height: 90vh;
-  overflow-y: auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .dark-theme .bottom-sheet-content {
@@ -1452,10 +1799,8 @@ onMounted(() => {
 .sheet-header {
   padding: 20px 20px 12px;
   border-bottom: 1px solid var(--gray-100);
-  position: sticky;
-  top: 0;
   background: white;
-  z-index: 10;
+  flex-shrink: 0;
 }
 
 .dark-theme .sheet-header {
@@ -1521,6 +1866,8 @@ onMounted(() => {
 
 .sheet-body {
   padding: 20px;
+  overflow-y: auto;
+  flex: 1;
 }
 
 /* Card Preview */
@@ -1769,8 +2116,7 @@ onMounted(() => {
   padding: 20px;
   border-top: 1px solid var(--gray-200);
   background: white;
-  position: sticky;
-  bottom: 0;
+  flex-shrink: 0;
 }
 
 .dark-theme .sheet-footer {
