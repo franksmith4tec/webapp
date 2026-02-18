@@ -200,7 +200,7 @@
                 <div class="info-row">
                   <span class="info-label">
                     <ion-icon :icon="calendar" class="info-icon"></ion-icon>
-                    Date
+                    
                   </span>
                   <span class="info-value">{{ formatDateTime(item.created_at) }}</span>
                 </div>
@@ -1084,7 +1084,7 @@ onMounted(() => {
    COMPACT SEARCH
    ============================================ */
 .search-container {
-  padding: 4px 16px 12px;
+  padding: 4px 16px 0px;
   transition: var(--transition);
 }
 
@@ -1592,7 +1592,7 @@ onMounted(() => {
 
 
 
-
+.expanded-section .info-row:nth-child(1) { padding: 4px 0px 0px 0px;}
 .expanded-section .info-row:nth-child(2) {display: none;}
 .expanded-section .info-row:nth-child(3) {display: none;}
 
@@ -1679,7 +1679,7 @@ onMounted(() => {
 
 .card-action-button:hover {
   background: var(--primary);
-  color: white;
+  color:#0b27ffb3;
 }
 
 /* ============================================
@@ -2199,9 +2199,7 @@ onMounted(() => {
     font-size: 12px;
   }
   
-  .card-expanded-content {
-    padding-left: 64px;
-  }
+
   
   .pagination-controls-modern {
     gap: 16px;
@@ -2210,6 +2208,57 @@ onMounted(() => {
   .page-dots {
     gap: 8px;
   }
+
+.card-expanded-content {
+        display: flex;
+        width: auto;
+        flex-direction: row-reverse;
+        justify-content: center;
+        align-items: stretch;
+                grid-gap: 15px;
+    }
+
+    .info-label {    font-size: 11px;}
+    .info-value{    font-size: 11px;}
+
+  .card-expanded-content .button-native{ margin: 0px; padding: 0px;    font-size: 11px !important;}
+
+.card-actions {grid-gap: 5px;}
+
+   .card-expanded-content .info-row {
+    padding: 0px 0;
+}
+   .card-expanded-content .card-action-button {        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(0, 0, 0, 0.05); border-radius: 20px; font-size: 11px;height: 28px; margin: 0px; padding: 0px;}
+
+.record-card{
+    background: white;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: var(--transition);
+    border: 1px solid var(--gray-100);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    gap: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 15px;
+    flex-direction: row-reverse;
+    flex-wrap: wrap;
+    align-content: center;
+    justify-content: space-evenly;
+    align-items: center;
+
+}
+
+
+.card-header {
+   
+    width: 100%;
+}
+
 }
 
 @media (max-width: 360px) {
