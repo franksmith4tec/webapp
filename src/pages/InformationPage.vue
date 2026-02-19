@@ -15,7 +15,7 @@
         <ion-title class="modern-title">
           <div class="title-container">
             <div class="title-icon-wrapper">
-              <ion-icon :icon="card" class="title-icon"></ion-icon>
+              <ion-icon :icon="card" class="title-icon" style="fill:#10b981;"></ion-icon>
             </div>
             <div class="title-text-container">
               <h1 class="title-main">Billing</h1>
@@ -24,6 +24,7 @@
               </p>
             </div>
           </div>
+        
         </ion-title>
         
         <ion-buttons slot="end">
@@ -43,6 +44,7 @@
             fill="clear"
             @click="toggleTheme"
             class="modern-icon-button"
+            style="display: none;"
           >
             <ion-icon :icon="themeIcon" slot="icon-only"></ion-icon>
           </ion-button>
@@ -1031,7 +1033,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  /* box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); */
 }
 
 .title-icon {
@@ -1482,6 +1484,7 @@ onMounted(() => {
   justify-content: center;
   font-size: 24px;
   box-shadow: var(--shadow-sm);
+      border-radius: 10px;
 }
 
 .card-info {
@@ -2163,6 +2166,9 @@ onMounted(() => {
     grid-template-columns: repeat(2, 1fr);
     gap: 8px;
   }
+
+
+  
   
   .stat-card {
     padding: 12px;
