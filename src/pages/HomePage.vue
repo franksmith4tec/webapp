@@ -95,6 +95,7 @@
             <ion-button class="icon-button" @click="goToInformation">
               <ion-icon :icon="settingsOutline" slot="icon-only"></ion-icon>
             </ion-button>
+            
           </ion-buttons>
         </ion-toolbar>
       </ion-header>
@@ -144,15 +145,23 @@
             <div class="action-icon info-icon">
               <ion-icon :icon="documentTextOutline"></ion-icon>
             </div>
-            <span class="action-label">Information</span>
+            <span class="action-label">Cards</span>
+          </div>
+
+
+           <div class="action-card" @click="goToCardTwo">
+            <div class="action-icon info-icon">
+              <ion-icon :icon="documentTextOutline"></ion-icon>
+            </div>
+            <span class="action-label">Link Cards</span>
           </div>
           
-          <div class="action-card" @click="showQuickHelp">
+          <!-- <div class="action-card" @click="showQuickHelp">
             <div class="action-icon help-icon">
               <ion-icon :icon="helpCircleOutline"></ion-icon>
             </div>
             <span class="action-label">Help</span>
-          </div>
+          </div> -->
         </div>
 
         <!-- Info Card -->
@@ -428,6 +437,10 @@ export default {
     
     goToInformation() {
       this.$router.push('/information')
+    },
+
+    goToCardTwo() {
+      this.$router.push('/cardtwo')
     },
     
     // PIN Methods

@@ -18,6 +18,12 @@ const routes = [
     name: 'Information',
     component: () => import('@/pages/InformationPage.vue')
   },
+
+  {
+    path: '/cardtwo',
+    name: 'cardtwo',
+    component: () => import('@/pages/CardTwo.vue')
+  },
   {
     path: '/about',
     name: 'About',
